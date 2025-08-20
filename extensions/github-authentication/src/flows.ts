@@ -73,6 +73,10 @@ interface IFlowTriggerOptions {
 	 */
 	signInProvider?: GitHubSocialSignInProvider;
 	/**
+	 * Extra parameter to include in the OAuth flow.
+	 */
+	extraParameter?: string;
+	/**
 	 * The Uri that the OAuth flow will redirect to. (i.e. vscode.dev/redirect)
 	 */
 	redirectUri: Uri;
@@ -180,6 +184,7 @@ class UrlHandlerFlow implements IFlow {
 		enterpriseUri,
 		nonce,
 		signInProvider,
+		extraParameter,
 		uriHandler,
 		existingLogin,
 		logger,
@@ -209,6 +214,10 @@ class UrlHandlerFlow implements IFlow {
 			}
 			if (signInProvider) {
 				searchParams.append('provider', signInProvider);
+			}
+			if (extraParameter) {
+				const [key, value] = extraParameter.split('=');
+				searchParams.append(key, value);
 			}
 
 			// The extra toString, parse is apparently needed for env.openExternal
@@ -259,6 +268,7 @@ class LocalServerFlow implements IFlow {
 		callbackUri,
 		enterpriseUri,
 		signInProvider,
+		extraParameter,
 		existingLogin,
 		logger
 	}: IFlowTriggerOptions): Promise<string> {
@@ -284,6 +294,10 @@ class LocalServerFlow implements IFlow {
 			}
 			if (signInProvider) {
 				searchParams.append('provider', signInProvider);
+			}
+			if (extraParameter) {
+				const [key, value] = extraParameter.split('=');
+				searchParams.append(key, value);
 			}
 
 			const loginUrl = baseUri.with({
@@ -332,7 +346,7 @@ class DeviceCodeFlow implements IFlow {
 		supportsSupportedClients: true,
 		supportsUnsupportedClients: true
 	};
-	async trigger({ scopes, baseUri, signInProvider, logger }: IFlowTriggerOptions) {
+	async trigger({ scopes, baseUri, signInProvider, extraParameter, logger }: IFlowTriggerOptions) {
 		logger.info(`Trying device code flow... (${scopes})`);
 
 		// Get initial device code
@@ -369,9 +383,15 @@ class DeviceCodeFlow implements IFlow {
 		await env.clipboard.writeText(json.user_code);
 
 		let open = Uri.parse(json.verification_uri);
+		const query = new URLSearchParams(open.query);
 		if (signInProvider) {
-			const query = new URLSearchParams(open.query);
 			query.set('provider', signInProvider);
+		}
+		if (extraParameter) {
+			const [key, value] = extraParameter.split('=');
+			query.set(key, value);
+		}
+		if (signInProvider || extraParameter) {
 			open = open.with({ query: query.toString() });
 		}
 		const uriToOpen = await env.asExternalUri(open);

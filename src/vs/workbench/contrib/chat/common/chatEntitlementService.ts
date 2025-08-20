@@ -21,7 +21,7 @@ import { IProductService } from '../../../../platform/product/common/productServ
 import { asText, IRequestService } from '../../../../platform/request/common/request.js';
 import { IStorageService, StorageScope, StorageTarget } from '../../../../platform/storage/common/storage.js';
 import { ITelemetryService, TelemetryLevel } from '../../../../platform/telemetry/common/telemetry.js';
-import { AuthenticationSession, AuthenticationSessionAccount, IAuthenticationExtensionsService, IAuthenticationService } from '../../../services/authentication/common/authentication.js';
+import { AuthenticationSession, AuthenticationSessionAccount, IAuthenticationCreateSessionOptions, IAuthenticationExtensionsService, IAuthenticationService } from '../../../services/authentication/common/authentication.js';
 import { EnablementState, IWorkbenchExtensionEnablementService } from '../../../services/extensionManagement/common/extensionManagement.js';
 import { IExtension, IExtensionsWorkbenchService } from '../../extensions/common/extensions.js';
 import { ChatContextKeys } from './chatContextKeys.js';
@@ -892,7 +892,9 @@ export class ChatEntitlementRequests extends Disposable {
 
 	async signIn(options?: { useSocialProvider?: string }) {
 		const providerId = ChatEntitlementRequests.providerId(this.configurationService);
-		const session = await this.authenticationService.createSession(providerId, defaultChat.providerScopes[0], options?.useSocialProvider ? { provider: options.useSocialProvider } : undefined);
+		const sessionOptions: IAuthenticationCreateSessionOptions = options?.useSocialProvider ? { provider: options.useSocialProvider } : {};
+		sessionOptions.extraParameter = 'get_started_with=copilot-vscode';
+		const session = await this.authenticationService.createSession(providerId, defaultChat.providerScopes[0], sessionOptions);
 
 		this.authenticationExtensionsService.updateAccountPreference(defaultChat.extensionId, providerId, session.account);
 		this.authenticationExtensionsService.updateAccountPreference(defaultChat.chatExtensionId, providerId, session.account);

@@ -343,7 +343,7 @@ export class GitHubAuthenticationProvider implements vscode.AuthenticationProvid
 			const signInProvider = isSocialSignInProvider(options?.provider) ? options.provider : undefined;
 			this._logger.info(`Logging in with${signInProvider ? ` ${signInProvider}, ` : ''} '${loginWith ? loginWith : 'any'}' account...`);
 			const scopeString = sortedScopes.join(' ');
-			const token = await this._githubServer.login(scopeString, signInProvider, loginWith);
+			const token = await this._githubServer.login(scopeString, signInProvider, options?.extraParameter, loginWith);
 			const session = await this.tokenToSession(token, scopes);
 			this.afterSessionLoad(session);
 
